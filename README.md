@@ -1,5 +1,9 @@
 # Remote Assignment
 
+## Build Assignment
+
+Build with sbt.
+
 ## Task 1
 
 The first version is not tail recursive as the recursive call is not in
@@ -9,6 +13,8 @@ but I have included a stack safe one that uses streams instead of Lists.
 This works because instead of evaluating all values recursively and
 constructing the list it calculates the first value, passing the
 function for the calculation of other values and returns immediately.
+
+Task2 can be run with the assignment tests
 
 ## Task 2
 
@@ -28,3 +34,5 @@ are not distinct solutions.
 Also the searching could be optimized to prioritize functions to get
 closer to the target quicker but I haven't really considered this as it
 would be overly complex for this application.
+
+Task2 program can be run by running task2.Main with sbt
