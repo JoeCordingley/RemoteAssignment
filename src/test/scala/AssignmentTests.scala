@@ -50,6 +50,11 @@ class AssignmentTests extends FreeSpec with Matchers{
       s"for inputs $inputs should include $expression" in {
         Defs.getAllPossibleExpressions(inputs) should contain(expression)
       }
+      s"for inputs $inputs should not repeat solutions" in {
+        val ret = Defs.getAllPossibleExpressions(inputs)
+        val numberOfSolutions = ret.length
+        ret.toSet should have size numberOfSolutions
+      }
     }
   }
 
