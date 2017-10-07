@@ -8,11 +8,18 @@ import scala.util.{Failure, Success, Try}
 object Defs {
 
   sealed trait Expression
-  sealed trait BinaryExpression extends Expression
+  sealed trait BinaryExpressionObj {
+    def apply(left: Expression, right: Expression): Expression
+  }
+  sealed trait Commutative
   case class Number(i:Int) extends Expression
-  case class Plus(left:Expression,right: Expression) extends BinaryExpression
-  case class Times(left:Expression, right: Expression) extends BinaryExpression
-  case class Minus(left:Expression, right: Expression) extends BinaryExpression
+  case class Plus(left:Expression,right: Expression) extends Expression
+  case class Times(left:Expression, right: Expression) extends Expression
+  case class Minus(left:Expression, right: Expression) extends Expression
+
+  object Plus extends BinaryExpressionObj with Commutative
+  object Times extends BinaryExpressionObj with Commutative
+  object Minus extends BinaryExpressionObj
 
   def expressionToString(expression: Expression) : String = expression match {
     case Number(i) => i.toString
@@ -30,28 +37,41 @@ object Defs {
 
   implicit def intToNumber(i:Int):Number = Number(i)
 
-  val binaryExpressions: List[(Expression,Expression)=> BinaryExpression] = List(
-    Plus.apply _,
-    Times.apply _,
-    Minus.apply _
+  val binaryExpressions: List[BinaryExpressionObj] = List(
+    Plus,
+    Times,
+    Minus
   )
 
   private def getAllExpressionCombinations(numbers:List[Int]):Stream[Expression] = numbers match {
     case List(x) => Stream(Number(x))
     case _ => for {
-      splitPoint <- (1 until numbers.length).toStream
-      (left,right) = numbers.splitAt(splitPoint)
+      (left,right) <- splitCombinations(numbers)
       leftExpression <- getAllExpressionCombinations(left)
       rightExpression <- getAllExpressionCombinations(right)
       expression <- binaryExpressions
-    } yield expression(leftExpression,rightExpression)
+      (newLeft,newRight) <- expression match {
+        case _:Commutative => singlePermutation(leftExpression,rightExpression)
+        case _ => bothPermutations(leftExpression,rightExpression)
+      }
+    } yield expression(newLeft,newRight)
   }
 
+  private def singlePermutation[A](l:A,r:A):Set[(A,A)] = Set((l,r))
+  private def bothPermutations[A](l:A,r:A):Set[(A,A)] = Set((l,r),(r,l))
+
+  //TODO Test this, perhaps using scalacheck
+  //returns all the possible ways of splitting a list into two groups, but with no symmetry
+  private def splitCombinations[A](as: List[A]): Stream[(List[A], List[A])] = {
+    val leftCombinations = (1 until as.length).toStream.flatMap(as.combinations)
+    val asReverse = as.reverse
+    val rightCombinations = (1 until as.length).reverse.toStream.flatMap(asReverse.combinations)
+    leftCombinations.zip(rightCombinations).take((leftCombinations.length + 1) / 2)
+  }
   def getAllPossibleExpressions(numbers:List[Int]):Stream[Expression] = for {
     length <- (1 to numbers.length).toStream
     combination <- numbers.combinations(length)
-    permutation <- combination.permutations
-    expression <- getAllExpressionCombinations(permutation)
+    expression <- getAllExpressionCombinations(combination)
   } yield expression
 
   def findExpression(numbers:List[Int], target:Int):Option[Expression] = getAllPossibleExpressions(numbers)

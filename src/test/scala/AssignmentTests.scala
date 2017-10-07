@@ -29,15 +29,43 @@ class AssignmentTests extends FreeSpec with Matchers{
     Defs.evaluate(ret.get) should equal(42)
   }
 
-  case class EvaluateTest(inputs: List[Int], expression: Expression,result:Int, string: String)
+  case class EvaluateTest(inputs: List[Int], expressions: Map[Expression,String],result:Int)
   val  evaluateTests =  List(
-    EvaluateTest(inputs = List(1,2,3), expression = Plus(1,Times(2,3)),result = 7, string = "(1 + 2 * 3)"),
-    EvaluateTest(inputs = List(2,2,3,4),expression = Minus(Times(2,4),Times(2,3)),result = 2, string = "(2 * 4 - 2 * 3)"),
-    EvaluateTest(inputs = List(2,3,4),expression = Times(3,Minus(2,4)),result = -6, string = "3 * (2 - 4)")
+    EvaluateTest(
+      inputs = List(1,2,3),
+      expressions = Map(
+        Plus(1,Times(2,3)) -> "(1 + 2 * 3)",
+        Plus(1, Times(3,2)) -> "(1 + 3 * 2)",
+        Plus(Times(2,3),1) -> "(2 * 3 + 1)",
+        Plus(Times(3,2),1) -> "(3 * 2 + 1)"
+      ),
+      result = 7
+    ),
+    EvaluateTest(
+      inputs = List(2,2,3,4),
+      expressions = Map(
+        Minus(Times(2,4),Times(2,3)) -> "(2 * 4 - 2 * 3)",
+        Minus(Times(4,2),Times(2,3)) -> "(4 * 2 - 2 * 3)",
+        Minus(Times(2,4),Times(3,2)) -> "(2 * 4 - 3 * 2)",
+        Minus(Times(4,2),Times(3,2)) -> "(4 * 2 - 3 * 2)"
+      ),
+      result = 2
+    ),
+    EvaluateTest(
+      inputs = List(2,3,4),
+      expressions = Map(
+        Times(3,Minus(2,4)) -> "3 * (2 - 4)",
+        Times(Minus(2,4),3) -> "(2 - 4) * 3"
+      ),
+      result = -6
+    )
   )
 
   "evaluate" - {
-    for ( EvaluateTest(_,expression,result,_) <- evaluateTests ){
+    for {
+      EvaluateTest(_,expressions,result) <- evaluateTests
+      expression <- expressions.keys
+    }{
       s"$expression should equal $result" in {
         Defs.evaluate(expression) should equal(result)
       }
@@ -46,9 +74,9 @@ class AssignmentTests extends FreeSpec with Matchers{
   }
 
   "getAllPossibleExpressions" - {
-    for(EvaluateTest(inputs,expression,_,_) <- evaluateTests){
-      s"for inputs $inputs should include $expression" in {
-        Defs.getAllPossibleExpressions(inputs) should contain(expression)
+    for(EvaluateTest(inputs,expressions,_) <- evaluateTests){
+      s"for inputs $inputs should include one of ${expressions.keys}" in {
+        Defs.getAllPossibleExpressions(inputs) should contain oneElementOf expressions.keys
       }
       s"for inputs $inputs should not repeat solutions" in {
         val ret = Defs.getAllPossibleExpressions(inputs)
@@ -59,7 +87,7 @@ class AssignmentTests extends FreeSpec with Matchers{
   }
 
   "findExpression" - {
-    for (EvaluateTest(inputs,_,target,_) <- evaluateTests) {
+    for (EvaluateTest(inputs,_,target) <- evaluateTests) {
       s"should find a valid expression for inputs $inputs and target $target" in {
         val ret = Defs.findExpression(inputs,target)
         ret shouldBe defined
@@ -76,7 +104,10 @@ class AssignmentTests extends FreeSpec with Matchers{
   }
 
   "expressionToString" -{
-    for (EvaluateTest(_,expression,_,string) <- evaluateTests) {
+    for {
+      EvaluateTest(_,expressions,_) <- evaluateTests
+      (expression,string) <- expressions
+    } {
       s"""for expression $expression should equal "$string" """ in {
         Defs.expressionToString(expression) should equal(string)
       }
