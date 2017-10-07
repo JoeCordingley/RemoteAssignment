@@ -75,13 +75,15 @@ class AssignmentTests extends FreeSpec with Matchers{
 
   "getAllPossibleExpressions" - {
     for(EvaluateTest(inputs,expressions,_) <- evaluateTests){
-      s"for inputs $inputs should include one of ${expressions.keys}" in {
-        Defs.getAllPossibleExpressions(inputs) should contain oneElementOf expressions.keys
-      }
-      s"for inputs $inputs should not repeat solutions" in {
+      s"for inputs $inputs" - {
         val ret = Defs.getAllPossibleExpressions(inputs)
-        val numberOfSolutions = ret.length
-        ret.toSet should have size numberOfSolutions
+        s"should include one of ${expressions.keys}" in {
+          ret should contain oneElementOf expressions.keys
+        }
+        s"should not repeat solutions" in {
+          val numberOfSolutions = ret.length
+          ret.toSet should have size numberOfSolutions
+        }
       }
     }
   }
