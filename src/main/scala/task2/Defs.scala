@@ -51,7 +51,7 @@ object Defs {
       rightExpression <- getAllExpressionCombinations(right)
       expression <- binaryExpressions
       (newLeft,newRight) <- expression match {
-        case _:Commutative => singlePermutation(leftExpression,rightExpression)
+        case _: Commutative => singlePermutation(leftExpression,rightExpression)
         case _ => bothPermutations(leftExpression,rightExpression)
       }
     } yield expression(newLeft,newRight)
@@ -65,8 +65,9 @@ object Defs {
   private def splitCombinations[A](as: List[A]): Stream[(List[A], List[A])] = {
     val leftCombinations = (1 until as.length).toStream.flatMap(as.combinations)
     val asReverse = as.reverse
+    val length = ((1 until as.length).map(as.combinations).map(_.length).sum+1)/2
     val rightCombinations = (1 until as.length).reverse.toStream.flatMap(asReverse.combinations)
-    leftCombinations.zip(rightCombinations).take((leftCombinations.length + 1) / 2)
+    leftCombinations.zip(rightCombinations).take(length)
   }
   def getAllPossibleExpressions(numbers:List[Int]):Stream[Expression] = for {
     length <- (1 to numbers.length).toStream
